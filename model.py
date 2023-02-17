@@ -1,10 +1,98 @@
 import sqlite3
-#mport baza
 
-baza = "test"
+def izracunaj_lestvico(cur, league_id, season, krog=100):
 
-conn = sqlite3.connect(baza)
-c = conn.cursor()
+    tekme = vse_tekme_v_sezoni(cur, league_id, season, krog)
+    # {ekipa_id: (Z, R, P, dani_goli, prejeti_goli)}
+    sl = {}
+
+    for stage, date, home_team_id, away_team_id, home_team_goals, away_team_goals in tekme:
+        if home_team_id not in sl:
+            if home_team_goals > away_team_goals:
+                sl[home_team_id] = (1, 0, 0, home_team_goals, away_team_goals)
+            elif home_team_goals < away_team_goals:
+                sl[home_team_id] = (0, 0, 1, home_team_goals, away_team_goals)
+            elif home_team_goals == away_team_goals:
+                sl[home_team_id] = (0, 1, 0, home_team_goals, away_team_goals)
+        else:
+            if home_team_goals > away_team_goals:
+                Z, R, P, dani_goli, prejeti_goli = sl[home_team_id]
+                Z += 1
+                R += 0
+                P += 0
+                dani_goli += home_team_goals
+                prejeti_goli += away_team_goals
+                sl[home_team_id] = (Z, R, P, dani_goli, prejeti_goli)
+            elif home_team_goals < away_team_goals:
+                Z, R, P, dani_goli, prejeti_goli = sl[home_team_id]
+                Z += 0
+                R += 0
+                P += 1
+                dani_goli += home_team_goals
+                prejeti_goli += away_team_goals
+                sl[home_team_id] = (Z, R, P, dani_goli, prejeti_goli)
+            elif home_team_goals == away_team_goals:
+                Z, R, P, dani_goli, prejeti_goli = sl[home_team_id]
+                Z += 0
+                R += 1
+                P += 0
+                dani_goli += home_team_goals
+                prejeti_goli += away_team_goals
+                sl[home_team_id] = (Z, R, P, dani_goli, prejeti_goli)
+        if away_team_id not in sl:
+            if away_team_goals > home_team_goals:
+                sl[away_team_id] = (1, 0, 0, away_team_goals, home_team_goals)
+            elif away_team_goals < home_team_goals:
+                sl[away_team_id] = (0, 0, 1, away_team_goals, home_team_goals)
+            elif away_team_goals == home_team_goals:
+                sl[away_team_id] = (0, 1, 0, away_team_goals, home_team_goals)
+        else:
+            if away_team_goals > home_team_goals:
+                Z, R, P, dani_goli, prejeti_goli = sl[away_team_id]
+                Z += 1
+                R += 0
+                P += 0
+                dani_goli += away_team_goals
+                prejeti_goli += home_team_goals
+                sl[away_team_id] = (Z, R, P, dani_goli, prejeti_goli)
+            elif away_team_goals < home_team_goals:
+                Z, R, P, dani_goli, prejeti_goli = sl[away_team_id]
+                Z += 0
+                R += 0
+                P += 1
+                dani_goli += away_team_goals
+                prejeti_goli += home_team_goals
+                sl[away_team_id] = (Z, R, P, dani_goli, prejeti_goli)
+            elif away_team_goals == home_team_goals:
+                Z, R, P, dani_goli, prejeti_goli = sl[away_team_id]
+                Z += 0
+                R += 1
+                P += 0
+                dani_goli += away_team_goals
+                prejeti_goli += home_team_goals
+                sl[away_team_id] = (Z, R, P, dani_goli, prejeti_goli)        
+    
+    return sl
+
+
+
+
+def vse_tekme_v_sezoni(cur, league_id, season, stage=100):
+    s2 = f"""
+    SELECT 
+        stage, date, home_team_api_id, away_team_api_id, home_team_goal, away_team_goal
+        FROM Match
+        WHERE league_id = {league_id} AND season = '{season}' AND stage <= {stage}
+        ORDER BY league_id, stage;
+    """
+    res = cur.execute(s2)
+    tekme = res.fetchall()
+    return tekme
+
+
+
+
+
 
 # def uvoziSQL(cur, datoteka):
 #     with open(datoteka) as f:
